@@ -17,8 +17,6 @@ import { useState } from 'react';
 
 export default function Interface() {
 
-
-
     // this func is a 'selector' we are telling it what we want back. in this case everything
     // I think the reson we are doing this is we dont have useFrame so we can call a get on each frame to check
     // so instead we get each parameter as a var and then when  the values change  to component needs to be rerendered

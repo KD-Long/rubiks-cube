@@ -5,7 +5,7 @@ import { KeyboardControls } from '@react-three/drei'
 
 import './style.css'
 import Experience from './Experience.jsx'
-import Interface from './interface.jsx'
+import Interface from './Interface.jsx'
 
 
 const root = ReactDOM.createRoot(document.querySelector('#root'))
