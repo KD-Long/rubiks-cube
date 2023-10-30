@@ -1,10 +1,14 @@
-import { OrbitControls, Text } from '@react-three/drei'
+import { OrbitControls, Text, useKeyboardControls } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import * as THREE from 'three'
 import ControlButton from './ControlButton'
 
+
+
+
+import { useKeyCombinations } from './useKeyCombinations.jsx';
 
 
 
@@ -21,6 +25,10 @@ export default function Experience() {
     const [targArray, setTargArray] = useState([]) // string 'x','y'
     const [lerpSpeed, setLerpSpeed] = useState(0.3)
 
+
+    // const [subscribeKey, getKeys] = useKeyboardControls()
+
+
     const cubesArray = []
 
     // sets positions of array
@@ -28,11 +36,13 @@ export default function Experience() {
         // for each slice font middle back
         for (let x = -1; x < 2; x++) {
             for (let y = -1; y < 2; y++) {
-                cubesArray.push({ position: [x * 1.1, y * 1.1, z * 1.1] })
+                cubesArray.push({ position: [x * 1.02, y * 1.02, z * 1.02] })
             }
 
         }
     }
+
+
 
 
     // control btn clicked
@@ -43,11 +53,15 @@ export default function Experience() {
      * @param {number} slice     - -1,0,1 slice of th axis sections -1 = x1 ,0=x2, 1=x3
      */
     const controlClick = (axis, direction, slice) => {
+
+        /* THERE is still a massive bug with this
+        if I hit two combinations at the same time it is freezing out XD
+        */
+
+
+
         // check X case
         // add objects to pivot group
-
-
-
 
         if (turnAxis == '') {
 
@@ -102,90 +116,132 @@ export default function Experience() {
 
 
 
-const cleanUp = () => {
-    // Add back all children of pivot group
-    // keeping transformation by applying the pivots transformation to each cube
-    turnPos.updateMatrixWorld(true)
-    targArray.forEach((cube) => {
-        cubesRef.current.add(cube);
-        cube.applyMatrix4(turnPos.matrixWorld);
-    })
+    const cleanUp = () => {
+        // Add back all children of pivot group
+        // keeping transformation by applying the pivots transformation to each cube
+        turnPos.updateMatrixWorld(true)
+        targArray.forEach((cube) => {
+            cubesRef.current.add(cube);
+            cube.applyMatrix4(turnPos.matrixWorld);
+        })
 
-    // reset all the use frame trigger
-    // Note all other states are set before this is changed on click func hence we dont need to discard old value
-    setLerpSpeed(0.3) // reset lerpspeed as it is not always reset on click 
-    setTurnAxis('')
+        // reset all the use frame trigger
+        // Note all other states are set before this is changed on click func hence we dont need to discard old value
+        setLerpSpeed(0.3) // reset lerpspeed as it is not always reset on click 
+        setTurnAxis('')
 
-
-
-    // this is where I want to resolvse my promise
-
-
-}
-
-
-
-
-useFrame(() => {
-
-    // console.log('frame: turnAxis= ',getAxis())
-    // console.log("turnPos = ", turnPos.children.length);
-    if (turnAxis != '') {
-        // lerp stuff
-        turnPos.quaternion.slerp(lerpTarget, lerpSpeed)
-        console.log('animation frame')
-
-        // ramp up let speed towards end (ending was too slow)
-        setLerpSpeed(Math.min(1,lerpSpeed*1.1))
-
-        // checks if it rotation complete
-        if (lerpTarget.angleTo(turnPos.quaternion) <= 0) {
-            console.log("STOP animation")
-            cleanUp()
-        }
     }
 
 
-})
+
+    
+
+    // Use the custom hook to manage key combinations
+    useKeyCombinations(controlClick);
 
 
-return <>
-    <color args={['#bdedfc']} attach='background' />
-    <OrbitControls makeDefault />
-    {/* <axesHelper args={[9]} /> */}
-    {/* <gridHelper args={[10, 10]} /> */}
 
 
-    <group ref={cubesRef}>
-        {cubesArray.map((value, index) => {
-            return <mesh key={index} position={value.position}>
-                <boxGeometry />
-                <meshBasicMaterial attach="material-0" color="#00FF00" toneMapped={false} />{/* green */}
-                <meshBasicMaterial attach="material-1" color="#0000FF" toneMapped={false} />{/* blue */}
-                <meshBasicMaterial attach="material-2" color="#FFFF00" toneMapped={false} />{/* yellow */}
-                <meshBasicMaterial attach="material-3" color="#FFFFFF" toneMapped={false} />{/* white */}
-                <meshBasicMaterial attach="material-4" color="#FF0000" toneMapped={false} />{/* red */}
-                <meshBasicMaterial attach="material-5" color="#FFA500" toneMapped={false} />{/* orange */}
-            </mesh>
-        })}
-    </group>
+    // one time call when component is rendered (no dependencies)
+    useEffect(() => {
 
 
-    {/* Control Buttons */}
-    {/* X */}
-    <ControlButton position={[3, 3, 0]} color={'#FF0000'} text={'X1'} onClickLeft={() => { controlClick('x', -1, -1) }} onClickRight={() => { controlClick('x', 1, -1) }} />
-    <ControlButton position={[3, 2.5, 0]} color={'#FF0000'} text={'X2'} onClickLeft={() => { controlClick('x', -1, 0) }} onClickRight={() => { controlClick('x', 1, 0) }} />
-    <ControlButton position={[3, 2, 0]} color={'#FF0000'} text={'X3'} onClickLeft={() => { controlClick('x', -1, 11) }} onClickRight={() => { controlClick('x', 1, 1) }} />
-    {/* Y */}
-    <ControlButton position={[4.5, 3, 0]} color={'#00FF00'} text={'Y1'} onClickLeft={() => { controlClick('y', -1, 1) }} onClickRight={() => { controlClick('y', 1, 1) }} />
-    <ControlButton position={[4.5, 2.5, 0]} color={'#00FF00'} text={'Y2'} onClickLeft={() => { controlClick('y', -1, 0) }} onClickRight={() => { controlClick('y', 1, 0) }} />
-    <ControlButton position={[4.5, 2, 0]} color={'#00FF00'} text={'Y3'} onClickLeft={() => { controlClick('y', -1, -1) }} onClickRight={() => { controlClick('y', 1, -1) }} />
-    {/* Z */}
-    <ControlButton position={[6, 3, 0]} color={'#0000FF'} text={'Z1'} onClickLeft={() => { controlClick('z', -1, 1) }} onClickRight={() => { controlClick('z', 1, 1) }} />
-    <ControlButton position={[6, 2.5, 0]} color={'#0000FF'} text={'Z2'} onClickLeft={() => { controlClick('z', -1, 0) }} onClickRight={() => { controlClick('z', 1, 0) }} />
-    <ControlButton position={[6, 2, 0]} color={'#0000FF'} text={'Z3'} onClickLeft={() => { controlClick('z', -1, -1) }} onClickRight={() => { controlClick('z', 1, -1) }} />
+
+        // the point of this is to only jump on change of key from:"not pressed" to "pressed"
+        // this function also returns a way to unsbuscribe (in the case of a component hot module replacment)
+        // useKeyCombinations(combinations);
+        // const unsubX1 = subscribeKey(
+        //     //selector "i want to listen to"
+        //     (state) => {
+        //         return (state.x1) && !(state.x1 && state.anti)
+        //     },
+        //     // whenq the change/event above happens above call this func
+        //     (value) => {
+        //         if (value)
+        //             controlClick('x', -1, -1)
+        //     })
+        // const unsubX1anti = subscribeKey(
+        //     //selector "i want to listen to"
+        //     (state) => {
+        //         return state.x1 && state.anti
+        //     },
+        //     // when the change/event above happens above call this func
+        //     (value) => {
+        //         if (value)
+        //             controlClick('x', 1, -1)
+        //     })
+
+        // // cleanup when //player gets modified hot module replacment (prevents subscribed key functions being called twice)
+        // return () => {
+        //     unsubX1()
+        //     unsubX1anti()
+        // }
 
 
-</>
+    }, [])
+
+
+    useFrame(() => {
+
+        // console.log('frame: turnAxis= ',getAxis())
+        // console.log("turnPos = ", turnPos.children.length);
+        if (turnAxis != '') {
+            // lerp stuff
+            turnPos.quaternion.slerp(lerpTarget, lerpSpeed)
+            console.log('animation frame')
+
+            // ramp up let speed towards end (ending was too slow)
+            setLerpSpeed(Math.min(1, lerpSpeed * 1.2))
+
+            // checks if it rotation complete
+            if (lerpTarget.angleTo(turnPos.quaternion) <= 0) {
+                console.log("STOP animation")
+                cleanUp()
+            }
+        }
+
+
+    })
+
+
+    return <>
+        <color args={['#bdedfc']} attach='background' />
+        <OrbitControls makeDefault />
+        {/* <axesHelper args={[9]} /> */}
+        {/* <gridHelper args={[10, 10]} /> */}
+
+
+        <group ref={cubesRef}>
+            {cubesArray.map((value, index) => {
+                return <mesh key={index} position={value.position}>
+                    <boxGeometry />
+                    <meshBasicMaterial attach="material-0" color="#00FF00" toneMapped={false} />{/* green */}
+                    <meshBasicMaterial attach="material-1" color="#0000FF" toneMapped={false} />{/* blue */}
+                    <meshBasicMaterial attach="material-2" color="#FFFF00" toneMapped={false} />{/* yellow */}
+                    <meshBasicMaterial attach="material-3" color="#FFFFFF" toneMapped={false} />{/* white */}
+                    <meshBasicMaterial attach="material-4" color="#FF0000" toneMapped={false} />{/* red */}
+                    <meshBasicMaterial attach="material-5" color="#FFA500" toneMapped={false} />{/* orange */}
+                </mesh>
+            })}
+        </group>
+
+
+        {/* Control Buttons */}
+   
+        {/* 
+        <ControlButton position={[3, 3, 0]} color={'#FF0000'} text={'X1'} onClickLeft={() => { controlClick('x', -1, -1) }} onClickRight={() => { controlClick('x', 1, -1) }} />
+        <ControlButton position={[3, 2.5, 0]} color={'#FF0000'} text={'X2'} onClickLeft={() => { controlClick('x', -1, 0) }} onClickRight={() => { controlClick('x', 1, 0) }} />
+        <ControlButton position={[3, 2, 0]} color={'#FF0000'} text={'X3'} onClickLeft={() => { controlClick('x', -1, 1) }} onClickRight={() => { controlClick('x', 1, 1) }} />
+       
+        <ControlButton position={[4.5, 3, 0]} color={'#00FF00'} text={'Y1'} onClickLeft={() => { controlClick('y', -1, 1) }} onClickRight={() => { controlClick('y', 1, 1) }} />
+        <ControlButton position={[4.5, 2.5, 0]} color={'#00FF00'} text={'Y2'} onClickLeft={() => { controlClick('y', -1, 0) }} onClickRight={() => { controlClick('y', 1, 0) }} />
+        <ControlButton position={[4.5, 2, 0]} color={'#00FF00'} text={'Y3'} onClickLeft={() => { controlClick('y', -1, -1) }} onClickRight={() => { controlClick('y', 1, -1) }} />
+       
+        <ControlButton position={[6, 3, 0]} color={'#0000FF'} text={'Z1'} onClickLeft={() => { controlClick('z', -1, 1) }} onClickRight={() => { controlClick('z', 1, 1) }} />
+        <ControlButton position={[6, 2.5, 0]} color={'#0000FF'} text={'Z2'} onClickLeft={() => { controlClick('z', -1, 0) }} onClickRight={() => { controlClick('z', 1, 0) }} />
+        <ControlButton position={[6, 2, 0]} color={'#0000FF'} text={'Z3'} onClickLeft={() => { controlClick('z', -1, -1) }} onClickRight={() => { controlClick('z', 1, -1) }} />
+        */}
+
+    </>
 }
 
