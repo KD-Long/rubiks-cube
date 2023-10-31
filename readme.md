@@ -48,3 +48,31 @@ npm run dev
 ```
 
 3. Open your web browser and navigate to http://localhost:3000 to access the project.
+
+
+## Hard problems
+
+
+1. Adding and removing cubes to turn groups while retaining transformations
+    - Update the groups matrix
+    - Iterate over cubes and apply the groups transformation to each cube
+    ```js
+        turn.turnGroup.updateMatrixWorld(true)
+        turn.targetArray.forEach((cube) => {
+            cubesRef.current.add(cube);
+            cube.applyMatrix4(turn.turnGroup.matrixWorld);
+        })
+    ```
+
+3. Interface/keyboard control intergration
+    - Instead of passing props up and down children (is hard because of linked functions/effects)
+    - Simulates keyboard events on interface allowing for Keyboard controler to handlew logic with set key combinations
+    ```js
+        const keyDownEvent = new KeyboardEvent('keydown', { key });
+        window.dispatchEvent(keyDownEvent);
+    ```
+
+3. Concurrnet async keyboard events trigering syncronus turn events
+    - A queue of turns where the first turn is consumed piece by piece in useFrame (lerp with an exit condition)
+    - On the first entry point to a new turn within the queue update its "target pivot turn group" (the 9 cubes that need to be turned)
+        - This prevents each turn on the queue holding onto to cubes (bit like a lock)

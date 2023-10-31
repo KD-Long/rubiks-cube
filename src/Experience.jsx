@@ -16,14 +16,9 @@ import { useKeyCombinations } from './useKeyCombinations.jsx';
 export default function Experience() {
 
     const cubesRef = useRef()
-    const testCubeRef = useRef()
     const state = useThree()
 
-    const [turnAxis, setTurnAxis] = useState('') // string 'x','y'
-    const [turnPos, setTurnPos] = useState(() => { return new THREE.Group() }) // parent of a group
-    const [lerpTarget, setLerpTarget] = useState(() => { return new THREE.Quaternion() })
-    const [targArray, setTargArray] = useState([]) // string 'x','y'
-    const [lerpSpeed, setLerpSpeed] = useState(0.3)
+    const [turnQueue, setTurnQueue] = useState([])
 
 
     // const [subscribeKey, getKeys] = useKeyboardControls()
@@ -54,160 +49,187 @@ export default function Experience() {
      */
     const controlClick = (axis, direction, slice) => {
 
-        /* THERE is still a massive bug with this
-        if I hit two combinations at the same time it is freezing out XD
-        */
+        //select axis to turn on
+        let axisAngle = (axis === 'x') ? new THREE.Vector3(1, 0, 0) : ((axis === 'y') ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1))
+
+        //difine and end rotation quarternion positon using axis + direction + rotation amount
+        let endRotation = new THREE.Quaternion()
+        endRotation.setFromAxisAngle(axisAngle, Math.PI / 2 * -direction);// rotate around Y half turn
+
+
+        // moved turn cube selector to diff function to be used to updatre on turn queue pop
+        
+
+        
+        // if queue has turns in it aready give  it dummy valuse to update later
+    
+        addToQueue(axis, null, [], endRotation, 0.3, slice)
+            
+    
 
 
 
-        // check X case
-        // add objects to pivot group
 
-        if (turnAxis == '') {
+        
+    }
 
-            setLerpSpeed(0.3)
-            const targetArr = []
+    const getPivotGroup = (axis, slice) => {
+   
 
-            // create a new fresh pivot for each turn
-            const pivotGroup = new THREE.Group();
-            state.scene.add(pivotGroup);
+        const targetArray = []
+        
+        // create a new fresh pivot for each turn
+        const pivotGroup = new THREE.Group();
+        state.scene.add(pivotGroup);
 
-            cubesRef.current.children.forEach((child, index) => {
-
-                let cube = child
-                // three way if to to set position to corresponding .x .y .z value
-                let position = (axis === 'x') ? cube.position.x : ((axis === 'y') ? cube.position.y : cube.position.z)
-
-                if (position < -0.5 && slice < 0) // left slice x1
-                    targetArr.push(cube)
-                else if (position > 0.5 && slice > 0) // right slice x2
-                    targetArr.push(cube)
-                else if ((position > -0.5 && position < 0.5) && slice == 0) // midle slice x1 there are sligh
-                    targetArr.push(cube)
-            })
-
-
-            //add targets to pivot group
-            //Note cant loop on group as it dynamicly chnages during loop -> weird shit
-            targetArr.forEach((cube) => {
-                pivotGroup.add(cube)
-            })
+        cubesRef.current.children.forEach((child, index) => {
+            let cube = child
+            // three way if to to set position to corresponding .x .y .z value
+            let position = (axis === 'x') ? cube.position.x : ((axis === 'y') ? cube.position.y : cube.position.z)
+            if (position < -0.5 && slice < 0) // left slice x1
+                targetArray.push(cube)
+            else if (position > 0.5 && slice > 0) // right slice x2
+                targetArray.push(cube)
+            else if ((position > -0.5 && position < 0.5) && slice == 0) // midle slice x1 there are sligh
+                targetArray.push(cube)
+        })
+     
 
 
-            //select axis to turn on
-            let axisAngle = (axis === 'x') ? new THREE.Vector3(1, 0, 0) : ((axis === 'y') ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1))
 
-            //difine and end rotation quarternion positon using axis + direction + rotation amount
-            let endRotation = new THREE.Quaternion()
-            endRotation.setFromAxisAngle(axisAngle, Math.PI / 2 * -direction);// rotate around Y half turn
+        //add targets to pivot group
+        //Note cant loop on group as it dynamicly chnages during loop -> weird shit
+        targetArray.forEach((cube) => {
+            pivotGroup.add(cube)
+        })
 
-            setLerpTarget(endRotation)
 
-            setTargArray(targetArr)
-            setTurnPos(pivotGroup)
-            //THis is the trigger for use frame to catch
-            setTurnAxis(axis)
+        return { pivotGroup, targetArray }
+    }
+
+
+
+    const cleanUp = (turn) => {
+        // Add back all children of pivot group
+        // keeping transformation by applying the pivots transformation to each cube
+        turn.turnGroup.updateMatrixWorld(true)
+        turn.targetArray.forEach((cube) => {
+            cubesRef.current.add(cube);
+            cube.applyMatrix4(turn.turnGroup.matrixWorld);
+        })
+
+
+        // remove front item from turn queue
+        removeFromQueue()
+     
+
+
+    }
+
+    const resetCamera = () => {
+        state.camera.position.copy(new THREE.Vector3(4, 8, 12))
+        state.camera.lookAt(new THREE.Vector3(0, 0, 0))
+        console.log("camera reset")
+    }
+
+    const scramble = () => {
+        console.log("scramble function")
+
+        //controlClick('x', 1, -1) 
+        for (let i = 0; i < 2; i++) {
+            // pick and axis
+            const a = 'x'
+            // pick a direction
+            const d = 1
+            // pick a slice
+            const s = -1
+            controlClick(a, d, s)
 
         }
 
 
-
     }
 
 
 
-    const cleanUp = () => {
-        // Add back all children of pivot group
-        // keeping transformation by applying the pivots transformation to each cube
-        turnPos.updateMatrixWorld(true)
-        targArray.forEach((cube) => {
-            cubesRef.current.add(cube);
-            cube.applyMatrix4(turnPos.matrixWorld);
-        })
+    const addToQueue = (tAxis, tPos, targetArray, lerptarget, lerpspeed, slice, firstTime= true) => {
 
-        // reset all the use frame trigger
-        // Note all other states are set before this is changed on click func hence we dont need to discard old value
-        setLerpSpeed(0.3) // reset lerpspeed as it is not always reset on click 
-        setTurnAxis('')
+        const newTurn = {
+            turnAxis: tAxis,
+            turnGroup: tPos,
+            targetArray: targetArray,
+            lerpTarget: lerptarget,
+            lerpSpeed: lerpspeed,
+            slice: slice,
+            firstTime:firstTime
+        }
 
+        // basically just pushs new turn to end of queue
+        setTurnQueue((prevQueue) => { return [...prevQueue, newTurn] })
     }
-
-
-
-    
-
-    // Use the custom hook to manage key combinations
-    useKeyCombinations(controlClick);
-
-
-
-
-    // one time call when component is rendered (no dependencies)
-    useEffect(() => {
-
-
-
-        // the point of this is to only jump on change of key from:"not pressed" to "pressed"
-        // this function also returns a way to unsbuscribe (in the case of a component hot module replacment)
-        // useKeyCombinations(combinations);
-        // const unsubX1 = subscribeKey(
-        //     //selector "i want to listen to"
-        //     (state) => {
-        //         return (state.x1) && !(state.x1 && state.anti)
-        //     },
-        //     // whenq the change/event above happens above call this func
-        //     (value) => {
-        //         if (value)
-        //             controlClick('x', -1, -1)
-        //     })
-        // const unsubX1anti = subscribeKey(
-        //     //selector "i want to listen to"
-        //     (state) => {
-        //         return state.x1 && state.anti
-        //     },
-        //     // when the change/event above happens above call this func
-        //     (value) => {
-        //         if (value)
-        //             controlClick('x', 1, -1)
-        //     })
-
-        // // cleanup when //player gets modified hot module replacment (prevents subscribed key functions being called twice)
-        // return () => {
-        //     unsubX1()
-        //     unsubX1anti()
-        // }
-
-
-    }, [])
+    const removeFromQueue = () => {
+        // Remove the item at the front of the queue (FIFO)
+        if (turnQueue.length > 0) {
+            const [removedItem, ...remainingItems] = turnQueue;
+            setTurnQueue(remainingItems);
+            // You can now use 'removedItem' if needed
+        }
+    };
 
 
     useFrame(() => {
+        // if its the first time this item turnQueue[0] has been called we want to calculate its pivot
+        if(turnQueue.length != 0 && turnQueue[0].firstTime){
+            //update the flag to flase
+            const thisTurn = turnQueue[0]
+            thisTurn.firstTime = false
 
-        // console.log('frame: turnAxis= ',getAxis())
-        // console.log("turnPos = ", turnPos.children.length);
-        if (turnAxis != '') {
+            // update pivotgroup and targetarr
+            const { pivotGroup, targetArray } = getPivotGroup(thisTurn.turnAxis, thisTurn.slice)
+            thisTurn.turnGroup = pivotGroup
+            thisTurn.targetArray = targetArray
+        }
+
+        // check queue is not empty
+        if (turnQueue.length != 0) {
+
+            // operate on the first item of queue
+            const turn = turnQueue[0]
             // lerp stuff
-            turnPos.quaternion.slerp(lerpTarget, lerpSpeed)
+            turn.turnGroup.quaternion.slerp(turn.lerpTarget, turn.lerpSpeed)
             console.log('animation frame')
 
             // ramp up let speed towards end (ending was too slow)
-            setLerpSpeed(Math.min(1, lerpSpeed * 1.2))
+            turn.lerpSpeed = Math.min(1, turn.lerpSpeed * 1.2)
+
+            // setLerpSpeed(Math.min(1, lerpSpeed * 1.2))
 
             // checks if it rotation complete
-            if (lerpTarget.angleTo(turnPos.quaternion) <= 0) {
+            if (turn.lerpTarget.angleTo(turn.turnGroup.quaternion) <= 0) {
                 console.log("STOP animation")
-                cleanUp()
+                cleanUp(turn)
+                // dont forget to pop from queue $$$$
             }
         }
 
 
+
+
+
+
+
     })
+
+    // Use the custom hook to manage key combinations
+    useKeyCombinations(controlClick, resetCamera, scramble)
 
 
     return <>
         <color args={['#bdedfc']} attach='background' />
         <OrbitControls makeDefault />
-        {/* <axesHelper args={[9]} /> */}
+
+
+        <axesHelper args={[9]} />
         {/* <gridHelper args={[10, 10]} /> */}
 
 
@@ -227,7 +249,7 @@ export default function Experience() {
 
 
         {/* Control Buttons */}
-   
+
         {/* 
         <ControlButton position={[3, 3, 0]} color={'#FF0000'} text={'X1'} onClickLeft={() => { controlClick('x', -1, -1) }} onClickRight={() => { controlClick('x', 1, -1) }} />
         <ControlButton position={[3, 2.5, 0]} color={'#FF0000'} text={'X2'} onClickLeft={() => { controlClick('x', -1, 0) }} onClickRight={() => { controlClick('x', 1, 0) }} />

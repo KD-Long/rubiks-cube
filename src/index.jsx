@@ -8,6 +8,7 @@ import Experience from './Experience.jsx'
 import Interface from './Interface.jsx'
 
 
+
 const root = ReactDOM.createRoot(document.querySelector('#root'))
 
 root.render(<>
@@ -27,6 +28,8 @@ root.render(<>
             { name: 'z3', keys: ['KeyC', 'Numpad3'] },
 
             { name: 'anti', keys: ['Space', 'ControlLeft','MetaLeft'] },
+            { name: 'resetCam', keys: ['F1'] },
+            { name: 'scramble', keys: ['F2'] },
         ]}
     >
         <Canvas
