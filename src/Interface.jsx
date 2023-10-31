@@ -156,6 +156,16 @@ export default function Interface() {
                         </div>
                     </div>
                 </div>
+                <div className="raw"  >
+                    <div
+                        className={`key`}
+                        onClick={() => { simulateKeyPress('F3') }}
+                    >
+                        <div className='text'>
+                            Solve
+                        </div>
+                    </div>
+                </div>
                
 
             </div>

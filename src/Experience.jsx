@@ -19,6 +19,11 @@ export default function Experience() {
     const state = useThree()
 
     const [turnQueue, setTurnQueue] = useState([])
+    const [reverseTurnQueue, setReverseTurnQueue] = useState([])
+    
+    const [callSolve, setCallSolve] = useState()
+
+
 
 
     // const [subscribeKey, getKeys] = useKeyboardControls()
@@ -62,14 +67,12 @@ export default function Experience() {
 
         
         // if queue has turns in it aready give  it dummy valuse to update later
+        
     
         addToQueue(axis, null, [], endRotation, 0.3, slice)
-            
-    
 
-
-
-
+        addToReverseQueue(axis, direction, slice)
+        
         
     }
 
@@ -135,20 +138,35 @@ export default function Experience() {
     const scramble = () => {
         console.log("scramble function")
 
-        //controlClick('x', 1, -1) 
-        for (let i = 0; i < 2; i++) {
-            // pick and axis
-            const a = 'x'
-            // pick a direction
-            const d = 1
-            // pick a slice
-            const s = -1
-            controlClick(a, d, s)
+        const axes = ['x', 'y', 'z'];
+        const directions = [-1, 1];
+        const slices = [-1, 0, 1];
 
+        for (let i = 0; i < 40; i++) {
+          
+            const randomAxis = axes[Math.floor(Math.random() * axes.length)];
+            const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+            const randomSlice = slices[Math.floor(Math.random() * slices.length)];
+          
+            // this will add 30 turns to the queue
+            controlClick(randomAxis, randomDirection, randomSlice)
+            
         }
-
-
     }
+
+    const solve = ()=>{
+        // the use efect part makes this function call when reverseTurnQueue exists rather than on creation in useKeyCombinations.jsx
+        // this funct just does the turns again 3x in order returning cube to original state
+        reverseTurnQueue.reverse().forEach((turn,index)=>{
+            // tdo the turn 3 time to reverse the turn
+            controlClick(turn.axis,turn.direction,turn.slice)
+            controlClick(turn.axis,turn.direction,turn.slice)
+            controlClick(turn.axis,turn.direction,turn.slice)
+        })
+        // set revse queue as empty
+        setReverseTurnQueue([])
+    }
+
 
 
 
@@ -163,10 +181,11 @@ export default function Experience() {
             slice: slice,
             firstTime:firstTime
         }
-
         // basically just pushs new turn to end of queue
         setTurnQueue((prevQueue) => { return [...prevQueue, newTurn] })
     }
+
+    
     const removeFromQueue = () => {
         // Remove the item at the front of the queue (FIFO)
         if (turnQueue.length > 0) {
@@ -176,8 +195,30 @@ export default function Experience() {
         }
     };
 
+    const addToReverseQueue = (axis, direction, slice) => {
+        const revTurn = {
+            axis: axis,
+            direction: direction,
+            slice: slice,
+
+        }
+        // basically just pushs new turn to end of queue
+        setReverseTurnQueue((prevQueue) => { return [...prevQueue, revTurn] })
+    }
+
+
+    useEffect(() => {
+        if (callSolve) {
+          solve(); // Step 3: Call solve when callSolve is true
+          setCallSolve(false); // Reset the state variable
+        }
+      }, [callSolve]);
+
+      
 
     useFrame(() => {
+
+      
         // if its the first time this item turnQueue[0] has been called we want to calculate its pivot
         if(turnQueue.length != 0 && turnQueue[0].firstTime){
             //update the flag to flase
@@ -212,6 +253,7 @@ export default function Experience() {
             }
         }
 
+   
 
 
 
@@ -220,8 +262,10 @@ export default function Experience() {
 
     })
 
+
+
     // Use the custom hook to manage key combinations
-    useKeyCombinations(controlClick, resetCamera, scramble)
+    useKeyCombinations(controlClick, resetCamera, scramble, solve, () => setCallSolve(true) )
 
 
     return <>
@@ -247,22 +291,6 @@ export default function Experience() {
             })}
         </group>
 
-
-        {/* Control Buttons */}
-
-        {/* 
-        <ControlButton position={[3, 3, 0]} color={'#FF0000'} text={'X1'} onClickLeft={() => { controlClick('x', -1, -1) }} onClickRight={() => { controlClick('x', 1, -1) }} />
-        <ControlButton position={[3, 2.5, 0]} color={'#FF0000'} text={'X2'} onClickLeft={() => { controlClick('x', -1, 0) }} onClickRight={() => { controlClick('x', 1, 0) }} />
-        <ControlButton position={[3, 2, 0]} color={'#FF0000'} text={'X3'} onClickLeft={() => { controlClick('x', -1, 1) }} onClickRight={() => { controlClick('x', 1, 1) }} />
-       
-        <ControlButton position={[4.5, 3, 0]} color={'#00FF00'} text={'Y1'} onClickLeft={() => { controlClick('y', -1, 1) }} onClickRight={() => { controlClick('y', 1, 1) }} />
-        <ControlButton position={[4.5, 2.5, 0]} color={'#00FF00'} text={'Y2'} onClickLeft={() => { controlClick('y', -1, 0) }} onClickRight={() => { controlClick('y', 1, 0) }} />
-        <ControlButton position={[4.5, 2, 0]} color={'#00FF00'} text={'Y3'} onClickLeft={() => { controlClick('y', -1, -1) }} onClickRight={() => { controlClick('y', 1, -1) }} />
-       
-        <ControlButton position={[6, 3, 0]} color={'#0000FF'} text={'Z1'} onClickLeft={() => { controlClick('z', -1, 1) }} onClickRight={() => { controlClick('z', 1, 1) }} />
-        <ControlButton position={[6, 2.5, 0]} color={'#0000FF'} text={'Z2'} onClickLeft={() => { controlClick('z', -1, 0) }} onClickRight={() => { controlClick('z', 1, 0) }} />
-        <ControlButton position={[6, 2, 0]} color={'#0000FF'} text={'Z3'} onClickLeft={() => { controlClick('z', -1, -1) }} onClickRight={() => { controlClick('z', 1, -1) }} />
-        */}
 
     </>
 }

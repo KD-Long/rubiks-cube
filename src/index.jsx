@@ -30,6 +30,7 @@ root.render(<>
             { name: 'anti', keys: ['Space', 'ControlLeft','MetaLeft'] },
             { name: 'resetCam', keys: ['F1'] },
             { name: 'scramble', keys: ['F2'] },
+            { name: 'solve', keys: ['F3'] },
         ]}
     >
         <Canvas

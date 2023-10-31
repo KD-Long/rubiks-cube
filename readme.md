@@ -1,4 +1,4 @@
-# [Rubiks-cube](https://.kyledlong.com)
+# [Rubiks-cube](https://rubiks-cube.kyledlong.com)
 
 This project aims to virtualise the movments of a rubiks cube. Created with React and Threejs
 <br>
