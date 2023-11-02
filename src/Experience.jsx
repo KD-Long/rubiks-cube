@@ -306,6 +306,11 @@ export default function Experience() {
         <Cube ref={cubeModelRef} position={[0,0,0]} />
 
 
+        <mesh position-y={-2} rotation-x={3*Math.PI/2}>
+            <planeGeometry args={[20,20]} />
+            <meshStandardMaterial />
+        </mesh>
+
     </>
 }
 
