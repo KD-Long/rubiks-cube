@@ -3,7 +3,8 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { Physics } from '@react-three/rapier'
 import { useRef, useState, useEffect } from 'react'
 import * as THREE from 'three'
-import ControlButton from './ControlButton'
+import ControlButton from './ControlButton.jsx'
+import Cube from './Cube.jsx'
 
 
 
@@ -16,12 +17,15 @@ import { useKeyCombinations } from './useKeyCombinations.jsx';
 export default function Experience() {
 
     const cubesRef = useRef()
+    const cubeModelRef = useRef()
     const state = useThree()
 
     const [turnQueue, setTurnQueue] = useState([])
     const [reverseTurnQueue, setReverseTurnQueue] = useState([])
     
     const [callSolve, setCallSolve] = useState()
+
+
 
 
 
@@ -85,7 +89,7 @@ export default function Experience() {
         const pivotGroup = new THREE.Group();
         state.scene.add(pivotGroup);
 
-        cubesRef.current.children.forEach((child, index) => {
+        cubeModelRef.current.children.forEach((child, index) => {
             let cube = child
             // three way if to to set position to corresponding .x .y .z value
             let position = (axis === 'x') ? cube.position.x : ((axis === 'y') ? cube.position.y : cube.position.z)
@@ -117,7 +121,7 @@ export default function Experience() {
         // keeping transformation by applying the pivots transformation to each cube
         turn.turnGroup.updateMatrixWorld(true)
         turn.targetArray.forEach((cube) => {
-            cubesRef.current.add(cube);
+            cubeModelRef.current.add(cube);
             cube.applyMatrix4(turn.turnGroup.matrixWorld);
         })
 
@@ -217,7 +221,8 @@ export default function Experience() {
       
 
     useFrame(() => {
-
+        // console.log( cubeModelRef.current)
+        
       
         // if its the first time this item turnQueue[0] has been called we want to calculate its pivot
         if(turnQueue.length != 0 && turnQueue[0].firstTime){
@@ -276,20 +281,29 @@ export default function Experience() {
         <axesHelper args={[9]} />
         {/* <gridHelper args={[10, 10]} /> */}
 
+        <ambientLight />
+        <directionalLight />
 
-        <group ref={cubesRef}>
+
+        {/* <group ref={cubesRef}>
+
             {cubesArray.map((value, index) => {
                 return <mesh key={index} position={value.position}>
                     <boxGeometry />
-                    <meshBasicMaterial attach="material-0" color="#00FF00" toneMapped={false} />{/* green */}
-                    <meshBasicMaterial attach="material-1" color="#0000FF" toneMapped={false} />{/* blue */}
-                    <meshBasicMaterial attach="material-2" color="#FFFF00" toneMapped={false} />{/* yellow */}
-                    <meshBasicMaterial attach="material-3" color="#FFFFFF" toneMapped={false} />{/* white */}
-                    <meshBasicMaterial attach="material-4" color="#FF0000" toneMapped={false} />{/* red */}
-                    <meshBasicMaterial attach="material-5" color="#FFA500" toneMapped={false} />{/* orange */}
+                    <meshBasicMaterial attach="material-0" color="#00FF00" toneMapped={false} />
+                    <meshBasicMaterial attach="material-1" color="#0000FF" toneMapped={false} />
+                    <meshBasicMaterial attach="material-2" color="#FFFF00" toneMapped={false} />
+                    <meshBasicMaterial attach="material-3" color="#FFFFFF" toneMapped={false} />
+                    <meshBasicMaterial attach="material-4" color="#FF0000" toneMapped={false} />
+                    <meshBasicMaterial attach="material-5" color="#FFA500" toneMapped={false} />
                 </mesh>
             })}
-        </group>
+            
+        </group> */}
+
+       
+
+        <Cube ref={cubeModelRef} position={[0,0,0]} />
 
 
     </>
