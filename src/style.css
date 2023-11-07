@@ -131,6 +131,7 @@ body,
      background: #ffffff44;
      pointer-events:all;
      cursor: pointer;
+   
 
  }
 
@@ -143,6 +144,10 @@ body,
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    
+    /* removes call out on chrome / ios devices */
+    -webkit-touch-callout: none;
+    user-select: none;
 
 }
 
