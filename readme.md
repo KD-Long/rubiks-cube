@@ -77,3 +77,24 @@ npm run dev
     - On the first entry point to a new turn within the queue update its "target pivot turn group" (the 9 cubes that need to be turned)
         - This prevents each turn on the queue holding onto to cubes (bit like a lock)
 
+4. Setting the position of model, then setting a target restoration position after physics effects
+    - Understanding what items were useing local or world cooridnates whe interchanging groups
+    - Adding and removing cubes from groups does strange positioning
+    - interating through physics componets attached to ref caused issues
+        -> Detached all physcics components
+    - final solution was to lerp towards final-originalgroup -> clear og and re add cubes
+
+5. Making async keypress helper hook take new updated state on function call
+    - solved with dirty calback to set a Flag containgin parameters needed
+
+
+### TODO: Next action ideas:
+
+2) Add float to cube to give moving effect while solving
+    <Float floatintensity={2} speed={3}>
+
+3) Set a more interesting bg Environment 
+    - <Environmernt preset='sunset' background blur={0.2}>
+
+
+
