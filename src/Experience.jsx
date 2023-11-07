@@ -32,6 +32,8 @@ export default function Experience() {
 
     const [callSolve, setCallSolve] = useState()
 
+    const [callScramble, setCallScramble] = useState()
+
     const [readyToPlay, setReadyToPlay] = useState(false)
 
 
@@ -69,6 +71,7 @@ export default function Experience() {
      */
     const controlClick = (axis, direction, slice) => {
         // set by model when animation complete -> prevents premature movements
+        // console.log('redaytoplay(controlclick): ',readyToPlay)  
         if (readyToPlay) {
             //select axis to turn on
             let axisAngle = (axis === 'x') ? new THREE.Vector3(1, 0, 0) : ((axis === 'y') ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1))
@@ -80,8 +83,6 @@ export default function Experience() {
 
             // moved turn cube selector to diff function to be used to updatre on turn queue pop
 
-
-
             // if queue has turns in it aready give  it dummy valuse to update later
 
             //        (tAxis, tPos, targetArray, lerptarget, lerpspeed, slice, firstTime = true) => {
@@ -89,33 +90,23 @@ export default function Experience() {
             addToReverseQueue(axis, direction, slice)
         }
 
-
-
     }
 
     const getPivotGroup = (axis, slice) => {
-
-
         const targetArray = []
-
         // create a new fresh pivot for each turn
         const pivotGroup = new THREE.Group();
 
         // this sets pivot group position to same as the whole cube
         pivotGroup.position.set(cubeModelRef.current.position.x, cubeModelRef.current.position.y, cubeModelRef.current.position.z);
 
-
         state.scene.add(pivotGroup);
 
         // the [0] selects the cube we want. (when we added rigid body it replaced our groupw withg [group,3d,3d,3d])
 
-
         cubeModelRef.current.children.forEach((child, index) => {
             // the .children[0] selects the cube we want. (when we added rigid body it replaced our groupw withg [group,3d,3d,3d])
-            // let cube = child
-            // console.log('child: ',child)
             let cube = child //.children[0]
-            // console.log('child.children[0]: ',child.children[0])
             // three way if to to set position to corresponding .x .y .z value
             let position = (axis === 'x') ? cube.position.x : ((axis === 'y') ? cube.position.y : cube.position.z)
             if (position < -0.5 && slice < 0) // left slice x1
@@ -179,13 +170,13 @@ export default function Experience() {
         const slices = [-1, 0, 1];
 
         for (let i = 0; i < 40; i++) {
-
             const randomAxis = axes[Math.floor(Math.random() * axes.length)];
             const randomDirection = directions[Math.floor(Math.random() * directions.length)];
             const randomSlice = slices[Math.floor(Math.random() * slices.length)];
 
             // this will add 30 turns to the queue
             controlClick(randomAxis, randomDirection, randomSlice)
+
 
         }
     }
@@ -254,6 +245,15 @@ export default function Experience() {
         }
     }, [callSolve]);
 
+
+    useEffect(() => {
+        if (callScramble) {
+            scramble(); //  solve when callSolve is true
+            setCallScramble(false); // Reset the state variable
+        }
+    }, [callScramble]);
+
+
     useEffect(() => {
         // if greater than 0 callControlClick is true
         if (callControlClick.length > 0) {
@@ -267,9 +267,9 @@ export default function Experience() {
     //use keyboardHooks -> need to put them after definitions
     // Use the custom hook to manage key combinations
     useKeyCombinations(
-        controlClick,
         resetCamera,
-        scramble, () => setCallSolve(true),
+        ()=> setCallScramble(true), 
+        ()=> setCallSolve(true),
         (params) => setCallControlClick(params) // params are the controlClick parms we want to use in the updated use effect
     )
 

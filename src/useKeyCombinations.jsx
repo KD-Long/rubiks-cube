@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { useKeyboardControls } from '@react-three/drei'
 
-export function useKeyCombinations(controlClick, resetCamera, scramble, callbackSetSolve,callbackControlClick) {
+export function useKeyCombinations(resetCamera, callbackScramble, callbackSetSolve,callbackControlClick) {
   const [subscribeKey, getKeys] = useKeyboardControls();
   const combinations = [
     // other controls cam etc
@@ -14,7 +14,7 @@ export function useKeyCombinations(controlClick, resetCamera, scramble, callback
     },
     {
       keys: ['scramble'],
-      effect: () => { scramble() },
+      effect: () => { callbackScramble() },
     },
     {
       keys: ['solve'],
