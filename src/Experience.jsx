@@ -1,14 +1,10 @@
-import { OrbitControls, Text, useKeyboardControls, useHelper } from '@react-three/drei'
+import { OrbitControls, Float, Text, useKeyboardControls, useHelper, Environment } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useRef, useState, useEffect } from 'react'
 import * as THREE from 'three'
 import { DirectionalLightHelper } from "three";
-import { InstancedRigidBodies, Physics, RigidBody, CuboidCollider,  CylinderCollider, MeshCollider } from '@react-three/rapier'
+import { InstancedRigidBodies, Physics, RigidBody, CuboidCollider, CylinderCollider, MeshCollider } from '@react-three/rapier'
 
-
-
-
-import ControlButton from './ControlButton.jsx'
 import Cube from './Cube.jsx'
 
 
@@ -19,11 +15,9 @@ import { useKeyCombinations } from './useKeyCombinations.jsx';
 
 
 
-export default function Experience() {
+export default function Experience({ started }) {
 
-    const [cubeStartPos, setCubeStartPos] = useState([1, 1, 1])
 
-    const cubesRef = useRef()
     const cubeModelRef = useRef()
     const state = useThree()
 
@@ -35,7 +29,6 @@ export default function Experience() {
     const [callScramble, setCallScramble] = useState()
 
     const [readyToPlay, setReadyToPlay] = useState(false)
-
 
 
     const dlightRef = useRef()
@@ -235,6 +228,7 @@ export default function Experience() {
     const togglePlayState = (boolean) => {
         // console.log('setting the play state to: ', boolean)
         setReadyToPlay(() => { return boolean })
+
     }
 
 
@@ -268,8 +262,8 @@ export default function Experience() {
     // Use the custom hook to manage key combinations
     useKeyCombinations(
         resetCamera,
-        ()=> setCallScramble(true), 
-        ()=> setCallSolve(true),
+        () => setCallScramble(true),
+        () => setCallSolve(true),
         (params) => setCallControlClick(params) // params are the controlClick parms we want to use in the updated use effect
     )
 
@@ -330,43 +324,21 @@ export default function Experience() {
         <ambientLight />
         <directionalLight ref={dlightRef} position={[15, 15, 15]} castShadow />
 
-        {/* <group ref={cubesRef}>
 
-            {cubesArray.map((value, index) => {
-                return <mesh key={index} position={value.position}>
-                    <boxGeometry />
-                    <meshBasicMaterial attach="material-0" color="#00FF00" toneMapped={false} />
-                    <meshBasicMaterial attach="material-1" color="#0000FF" toneMapped={false} />
-                    <meshBasicMaterial attach="material-2" color="#FFFF00" toneMapped={false} />
-                    <meshBasicMaterial attach="material-3" color="#FFFFFF" toneMapped={false} />
-                    <meshBasicMaterial attach="material-4" color="#FF0000" toneMapped={false} />
-                    <meshBasicMaterial attach="material-5" color="#FFA500" toneMapped={false} />
-                </mesh>
-            })}
-            
-        </group> */}
+        <Environment preset='sunset' background blur={0.3}></Environment>
+
 
         <Physics
             // debug
             gravity={[0, -19.08, 0]}
         >
 
+            <Cube ref={cubeModelRef} castShadow position={[0, 10, 0]} finalPos={new THREE.Vector3(0, 1, 0)} togglePlayState={togglePlayState} started={started} />
 
-            <Cube ref={cubeModelRef} castShadow position={[0, 10, 0]} finalPos={new THREE.Vector3(0, 1, 0)} togglePlayState={togglePlayState} />
-
-
-            {/* Shpere */}
-            {/* <RigidBody
-                colliders='ball'
-            >
-                <mesh castShadow position={[0, 0, 0]}>
-                    <sphereGeometry />
-                    <meshStandardMaterial color="orange" />
-                </mesh>
-            </RigidBody> */}
 
             {/* Floor */}
             <RigidBody
+                name='FLOOR-BODY'
                 type='fixed'
                 restitution={1}
                 friction={0.7}
@@ -374,7 +346,7 @@ export default function Experience() {
             >
                 <mesh receiveShadow position-y={-2} rotation-x={3 * Math.PI / 2}>
                     <planeGeometry args={[20, 20]} />
-                    <meshStandardMaterial />
+                    <meshStandardMaterial color='#1fdbc8' />
                 </mesh>
             </RigidBody>
 
@@ -394,9 +366,10 @@ export default function Experience() {
             <RigidBody
                 type='fixed'
                 colliders='ball'
+                name='SPHERE-BODY'
             >
-                <mesh >
-                    <sphereGeometry args={[0.7,2,2]}/>
+                <mesh position={[0, -1, 0]}>
+                    <sphereGeometry args={[1, 8, 16]} />
                     <meshNormalMaterial visible={false} />
                 </mesh>
             </RigidBody>

@@ -87,14 +87,13 @@ npm run dev
 5. Making async keypress helper hook take new updated state on function call
     - solved with dirty calback to set a Flag containgin parameters needed
 
+6. Making realistic sounds
 
-### TODO: Next action ideas:
 
-2) Add float to cube to give moving effect while solving
-    <Float floatintensity={2} speed={3}>
 
-3) Set a more interesting bg Environment 
-    - <Environmernt preset='sunset' background blur={0.2}>
+
+
+
 
 
 

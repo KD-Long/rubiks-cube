@@ -14,24 +14,43 @@ export default forwardRef(function Cube(props, cubeModelRef) {
   const gltf = useGLTF('/cube.glb')
   const { nodes, materials } = gltf
   
+  const [startTimeFlag, setStartTimeFlag] = useState()
+  const [startTimeValue, setStartTimeValue] = useState(0)
 
   // is 27 if all if all bodies are sleeping
   const [allSleeping, setAllSleeping] = useState(0)
   const [readyToPlay, setReadyToPlay] = useState(false) // flag for first state change of cleanup post restore
 
-
   const dstGroup = useRef()
-
   const rigid = useRef()
-  const rapier = useRapier()
-
 
   // not 'ref' is the reffere3nce passed from the parent
   const [isVisible, setIsVisible] = useState(true);
 
-  const togglePhysics = ()=>{
-      setIsVisible(!isVisible)
-  }
+  const [hitSound] = useState(() => { return new Audio('./hit.mp3') })
+  const [lastCollisionTimes, setLastCollisionTimes] = useState({});
+  const collisionInterval = 400; // 0.5 second in milliseconds
+
+
+  const cubeCollisionEnter = (cubeId, payload) => {
+    // console.log('cube collision!')
+    
+    const currentTime = Date.now();
+    const lastCollisionTime = lastCollisionTimes[cubeId] || 0;
+
+    //checks above a threshold of impact force and time sice previous sound is bigger than threshold
+    if ((payload.maxForceMagnitude>40) && (currentTime - lastCollisionTime >= collisionInterval)) {
+      
+      hitSound.currentTime = 0 // resets the sound when second collision
+      hitSound.volume = Math.min(payload.maxForceMagnitude,100)/100 // randomize sounds
+      hitSound.play()
+      setLastCollisionTimes((prevTimes) => ({ ...prevTimes, [cubeId]: currentTime }));
+    }
+
+}
+
+
+
 
 
   useEffect(() => {
@@ -74,10 +93,23 @@ export default forwardRef(function Cube(props, cubeModelRef) {
 
   }, []);
 
-  useFrame((state) => {
-  
-    const elapsedTime = state.clock.elapsedTime.toFixed(0) // note this rounds 1.5 ->2 but thats fine
+  // on start change e.g click set the flag to trigger the caluclation of startTimeValue in useFrame
+  useEffect(()=>{
+    setStartTimeFlag(true)
+  },[props.started])
 
+  useFrame((state) => {
+    
+    const elapsedTime = state.clock.elapsedTime.toFixed(0) - startTimeValue // note this rounds 1.5 ->2 but thats fine
+
+    // when start is pressed get this timestamp and subtract from elapsed to make sure animations are in sync
+    if(startTimeFlag){
+      setStartTimeValue(elapsedTime)
+      setStartTimeFlag(false)
+    }
+
+  
+   
     // logic
     // if all cubes sleeping OR time 7s start lerping ->
     // when 10 sec stop lerping and cleanup
@@ -151,13 +183,18 @@ export default forwardRef(function Cube(props, cubeModelRef) {
 
     <group ref={cubeModelRef} {...props} dispose={null}  >
       <RigidBody
+        name='cube_1'
         ref={rigid}
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
-      colliders='cuboid'
+        colliders='cuboid'
         type='dynamic'
+        onContactForce={(payload)=> cubeCollisionEnter('cube_1',payload)}
+
+
+        
 
       >
         <group name="cube_1" position={[-1.01, -1.01, -1.01]} rotation={[Math.PI, 1.571, 0]}>
@@ -169,12 +206,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
      
 
       <RigidBody
+        name='cube_2'
         colliders='cuboid'
                onSleep={() => {
                 setAllSleeping((previous)=>{return previous+1})
            
         }}
         type='dynamic'
+        onContactForce={(payload)=> cubeCollisionEnter('cube_2',payload)}
+
       >
         <group name="cube_2" position={[0, -1.01, -1.01]} rotation={[Math.PI / 2, 0, 0]}>
           <mesh castShadow name="Cube069" geometry={nodes.Cube069.geometry} material={materials['white.014']} />
@@ -183,12 +223,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_3'
         colliders='cuboid'
         onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_3',payload)}
+
       >
         <group name="cube_3" position={[1.01, -1.01, -1.01]} rotation={[0, 0, Math.PI]}>
           <mesh castShadow name="Cube071" geometry={nodes.Cube071.geometry} material={materials['white.016']} />
@@ -198,12 +241,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_4'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_4',payload)}
+
       >
         <group name="cube_4" position={[-1.01, -1.01, 0]} rotation={[Math.PI, Math.PI / 2, 0]}>
           <mesh castShadow name="Cube066" geometry={nodes.Cube066.geometry} material={materials['white.011']} />
@@ -212,23 +258,29 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_5'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_5',payload)}
+
       >
         <mesh castShadow name="cube_5" geometry={nodes.cube_5.geometry} material={materials['white.010']} position={[0, -1.01, 0]} />
       </RigidBody>
 
       <RigidBody
+        name='cube_6'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_6',payload)}
+
       >
         <group name="cube_6" position={[1.01, -1.01, 0]} rotation={[-Math.PI, -Math.PI / 2, 0]}>
           <mesh castShadow name="Cube068" geometry={nodes.Cube068.geometry} material={materials['white.013']} />
@@ -237,12 +289,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_7'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_7',payload)}
+
       >
         <group name="cube_7" position={[-1.01, -1.01, 1.01]} rotation={[-Math.PI, 0, 0]}>
           <mesh castShadow name="Cube073" geometry={nodes.Cube073.geometry} material={materials['white.018']} />
@@ -252,12 +307,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_8'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_8',payload)}
+
       >
         <group name="cube_8" position={[0, -1.01, 1.01]} rotation={[Math.PI, 0, 0]}>
           <mesh castShadow name="Cube067" geometry={nodes.Cube067.geometry} material={materials['white.012']} />
@@ -266,12 +324,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_9'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_9',payload)}
+
       >
         <group name="cube_9" position={[1.01, -1.01, 1.01]} rotation={[-Math.PI, -Math.PI / 2, 0]}>
           <mesh castShadow name="Cube074" geometry={nodes.Cube074.geometry} material={materials['white.019']} />
@@ -281,12 +342,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_10'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_10',payload)}
+
       >
         <group name="cube_10" position={[-1.01, 0, -1.01]} rotation={[0, 0, Math.PI / 2]}>
           <mesh castShadow name="Cube052" geometry={nodes.Cube052.geometry} material={materials['blue.003']} />
@@ -295,23 +359,29 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_11'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_11',payload)}
+
       >
         <mesh castShadow name="cube_11" geometry={nodes.cube_11.geometry} material={materials['orange.003']} position={[0, 0, -1.01]} />
       </RigidBody>
 
       <RigidBody
+        name='cube_12'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_12',payload)}
+
       >
         <group name="cube_12" position={[1.01, 0, -1.01]} rotation={[0, 0, -Math.PI / 2]}>
           <mesh castShadow name="Cube053" geometry={nodes.Cube053.geometry} material={materials['green.002']} />
@@ -320,45 +390,57 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_13'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_13',payload)}
+
       >
         <mesh castShadow name="cube_13" geometry={nodes.cube_13.geometry} material={materials['blue.002']} position={[-1.01, 0, 0]} />
       </RigidBody>
 
       <RigidBody
+        name='cube_14'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_14',payload)}
+
       >
         <mesh castShadow name="cube_14" geometry={nodes.cube_14.geometry} material={materials['white.009']} />
       </RigidBody>
 
       <RigidBody
+        name='cube_15'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_15',payload)}
+
       >
         <mesh castShadow name="cube_15" geometry={nodes.cube_15.geometry} material={materials['green.001']} position={[1.01, 0, 0]} />
       </RigidBody>
 
       <RigidBody
+        name='cube_16'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_16',payload)}
+
       >
         <group name="cube_16" position={[-1.01, 0, 1.01]} rotation={[Math.PI, 0, Math.PI / 2]}>
           <mesh castShadow name="Cube054" geometry={nodes.Cube054.geometry} material={materials['blue.004']} />
@@ -367,23 +449,29 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_17'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_17',payload)}
+
       >
         <mesh castShadow name="cube_17" geometry={nodes.cube_17.geometry} material={materials['red.002']} position={[0, 0, 1.01]} />
       </RigidBody>
 
       <RigidBody
+        name='cube_18'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_18',payload)}
+
       >
         <group name="cube_18" position={[1.01, 0, 1.01]} rotation={[Math.PI, 0, -Math.PI / 2]}>
           <mesh castShadow name="Cube055" geometry={nodes.Cube055.geometry} material={materials['green.003']} />
@@ -392,12 +480,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_19'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_19',payload)}
+
       >
         <group name="cube_19" position={[-1.01, 1.01, -1.01]}>
           <mesh castShadow name="Cube061" geometry={nodes.Cube061.geometry} material={materials['Yellow.007']} />
@@ -408,12 +499,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
 
 
       <RigidBody
+        name='cube_20'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_20',payload)}
+
       >
         <group name="cube_20" position={[0, 1.01, -1.01]}>
           <mesh castShadow name="Cube060" geometry={nodes.Cube060.geometry} material={materials['Yellow.006']} />
@@ -422,12 +516,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_21'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_21',payload)}
+
       >
         <group name="cube_21" position={[1.01, 1.01, -1.01]} rotation={[0, -1.571, 0]}>
           <mesh castShadow name="Cube062" geometry={nodes.Cube062.geometry} material={materials['Yellow.008']} />
@@ -437,12 +534,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_22'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_22',payload)}
+
       >
         <group name="cube_22" position={[-1.01, 1.01, 0]} rotation={[-Math.PI / 2, 0, -Math.PI / 2]}>
           <mesh castShadow name="Cube058" geometry={nodes.Cube058.geometry} material={materials['Yellow.004']} />
@@ -451,22 +551,28 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_23'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_23',payload)}
+
       >
         <mesh castShadow name="cube_23" geometry={nodes.cube_23.geometry} material={materials['Yellow.002']} position={[0, 1.01, 0]} />
       </RigidBody>
       <RigidBody
+        name='cube_24'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_24',payload)}
+
       >
         <group name="cube_24" position={[1.01, 1.01, 0]} rotation={[-Math.PI / 2, 0, Math.PI / 2]}>
           <mesh castShadow name="Cube059" geometry={nodes.Cube059.geometry} material={materials['Yellow.005']} />
@@ -475,12 +581,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_25'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_25',payload)}
+
       >
         <group name="cube_25" position={[-1.01, 1.01, 1.01]} rotation={[0, 1.571, 0]}>
           <mesh castShadow name="Cube064" geometry={nodes.Cube064.geometry} material={materials['Yellow.010']} />
@@ -490,12 +599,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
       </RigidBody>
 
       <RigidBody
+        name='cube_26'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_26',payload)}
+
       >
         <group name="cube_26" position={[0, 1.01, 1.01]} rotation={[-Math.PI / 2, 0, 0]}>
           <mesh castShadow name="Cube057" geometry={nodes.Cube057.geometry} material={materials['Yellow.003']} />
@@ -503,12 +615,15 @@ export default forwardRef(function Cube(props, cubeModelRef) {
         </group>
       </RigidBody>
       <RigidBody
+        name='cube_27'
         colliders='cuboid'
                onSleep={() => {
            setAllSleeping((previous)=>{return previous+1})
            
         }}
       type='dynamic'
+      onContactForce={(payload)=> cubeCollisionEnter('cube_27',payload)}
+
       >
         <group name="cube_27" position={[1.01, 1.01, 1.01]} rotation={[Math.PI, 0, Math.PI]}>
           <mesh castShadow name="Cube063" geometry={nodes.Cube063.geometry} material={materials['Yellow.009']} />
